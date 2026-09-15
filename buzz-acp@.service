@@ -1,0 +1,16 @@
+[Unit]
+Description=Buzz ACP agent %i
+After=network-online.target
+
+[Service]
+EnvironmentFile=/root/buzz-acp/env/%i.env
+# PATH에 node(어댑터)와 buzz CLI 경로 포함시킬 것
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=HOME=/root
+WorkingDirectory=/root/buzz-acp/work/%i
+ExecStart=/root/buzz/target/release/buzz-acp
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

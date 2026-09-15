@@ -1,0 +1,15 @@
+# 정기 업무 워크플로우 예시 — 매일 07:00 KST(=22:00 UTC) 날씨 브리핑 트리거
+# 등록: buzz workflows create --channel <채널uuid> --yaml "$(cat workflow-example.yaml)"
+#   (등록 계정은 해당 채널 멤버여야 함. 전용 트리거 계정을 하나 두면 관리가 깔끔)
+# 동작: 릴레이 스케줄러(60초 주기)가 멘션 메시지를 게시(p-태그+workflow-mention 증명)
+#       → 멘션된 에이전트가 페르소나의 "정기 업무 카드" 지시를 수행해 채널에 게시
+# 주의: cron은 UTC. 요일 환산 필수, 요일 숫자 0 금지(이름 표기 권장) — 예: 평일 08:30 KST = "30 23 * * SUN-THU"
+name: 정기-날씨브리핑
+description: "매일 07:00 KST 날씨 브리핑 (트리거는 담당 에이전트 페르소나의 업무 카드 수행)"
+trigger:
+  on: schedule
+  cron: "0 22 * * *"
+steps:
+  - id: t1
+    action: send_message
+    text: "[정기] @<에이전트이름> 날씨 브리핑"

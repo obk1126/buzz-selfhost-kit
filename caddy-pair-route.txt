@@ -1,0 +1,20 @@
+# Caddy 사이트 블록 — 릴레이 프록시 + 모바일 페어링(/pair) 라우트
+# (기존 Caddy를 쓰는 서버 기준. 도메인·컨테이너명은 환경에 맞게)
+
+<도메인> {
+	@pair path /pair
+	handle @pair {
+		reverse_proxy buzz-pair-relay:5000
+	}
+	handle {
+		reverse_proxy buzz-relay:3000
+	}
+}
+
+# 페어링 사이드카 (릴레이 이미지에 바이너리 동봉 — entrypoint만 교체해 별도 컨테이너로)
+# docker run -d --restart unless-stopped --network <buzz네트워크> --name buzz-pair-relay \
+#   -e BUZZ_PAIR_RELAY_BIND_ADDR=0.0.0.0:5000 \
+#   --entrypoint /usr/local/bin/buzz-pair-relay ghcr.io/block/buzz:main
+#
+# 검증: 정상 WebSocket 핸드셰이크로 https://<도메인>/pair 가 101을 돌려주면 성공.
+# (curl 단순 프로브는 400이 나올 수 있음 — 404만 아니면 라우트는 도달한 것)
