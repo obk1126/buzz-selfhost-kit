@@ -415,7 +415,9 @@ $("genter").onclick = () => tryEnter($("gcode").value.trim());
 $("gcode").addEventListener("keydown", e => { if (e.key === "Enter") tryEnter($("gcode").value.trim()); });
 
 renderChannel(); health(); setInterval(health, 60000);
-if (code) { $("gcode").value = code; tryEnter(code); }
+const urlKey = new URLSearchParams(location.search).get("k");
+if (urlKey) { $("gcode").value = urlKey; tryEnter(urlKey); }
+else if (code) { $("gcode").value = code; tryEnter(code); }
 </script>
 </body>
 </html>
