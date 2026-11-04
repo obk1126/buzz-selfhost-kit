@@ -5,87 +5,135 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>에이전트 크루 직접 써보기 — 김우빈 AX 데모</title>
 <style>
-  :root { --text:#1a1a1a; --sub:#555; --line:#e5e5e5; --accent:#0b57d0; --warn:#b06000; --bg-soft:#f6f7f8; }
+  :root {
+    --bg: #F0ECDE; --panel: #E9E4D2; --bubble: #FBF9F1; --bubble-me: #DCE0C2;
+    --ink: #2B2A20; --sub: #6F6A55; --olive: #55602F; --line: #DED8C4;
+    --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:"Apple SD Gothic Neo","Pretendard",-apple-system,"Segoe UI","Noto Sans KR",sans-serif;
-         color:var(--text); line-height:1.7; font-size:16px; max-width:760px; margin:0 auto; padding:48px 24px 96px; }
-  h1 { font-size:28px; line-height:1.4; margin-bottom:8px; }
-  h2 { font-size:20px; margin:56px 0 8px; }
-  p  { margin-bottom:16px; }
-  .meta { font-size:14px; color:var(--sub); margin-bottom:32px; }
-  .meta a { color:var(--accent); text-decoration:none; }
-  .sub { font-size:14px; color:var(--sub); margin-bottom:16px; }
-  .gate { background:var(--bg-soft); border-radius:8px; padding:16px; margin-bottom:40px;
-          display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .gate label { font-size:14px; font-weight:600; }
-  input[type=text], input[type=password] { font:inherit; font-size:14px; padding:8px 12px;
-          border:1px solid var(--line); border-radius:8px; }
-  button { font:inherit; font-size:14px; cursor:pointer; border-radius:8px;
-           border:1px solid var(--line); background:#fff; padding:8px 16px; }
-  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
-  button:disabled { opacity:.4; cursor:default; }
-  .chatbox { border:1px solid var(--line); border-radius:8px; padding:16px; min-height:160px;
-             max-height:420px; overflow-y:auto; margin-bottom:8px; }
-  .bub { margin-bottom:16px; font-size:14px; white-space:pre-wrap; }
-  .bub .who { font-weight:600; font-size:14px; }
-  .bub.me .who { color:var(--sub); }
-  .bub.bot .who { color:var(--accent); }
-  .bub.sys { color:var(--warn); font-size:14px; }
-  .inrow { display:flex; gap:8px; }
-  .inrow input { flex:1; }
-  .hint { font-size:14px; color:var(--sub); margin-top:8px; }
-  .steps { margin-top:16px; }
-  .step { border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin-bottom:8px;
-          font-size:14px; white-space:pre-wrap; }
-  .step .lab { font-weight:600; display:block; margin-bottom:8px; }
-  .step.writer .lab { color:var(--accent); }
-  .step.critic .lab { color:var(--warn); }
-  .step.system { color:var(--sub); }
-  select { font:inherit; font-size:14px; padding:8px 12px; border:1px solid var(--line); border-radius:8px; }
-  .runrow { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .spin { color:var(--sub); font-size:14px; }
-  footer { margin-top:64px; padding-top:24px; border-top:1px solid var(--line); font-size:14px; color:var(--sub); }
-  footer a { color:var(--accent); text-decoration:none; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Apple SD Gothic Neo", "Pretendard", -apple-system, "Noto Sans KR", sans-serif;
+    font-size: 16px; line-height: 1.8;
+    max-width: 680px; margin: 0 auto; padding: 72px 24px 120px;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2 { font-family: "Noto Serif KR", "Apple SD Gothic Neo", Georgia, serif; font-weight: 600; letter-spacing: -0.01em; }
+  h1 { font-size: 30px; line-height: 1.3; margin-bottom: 12px; }
+  h2 { font-size: 20px; margin: 72px 0 8px; }
+  p { margin-bottom: 16px; }
+  .meta, .sub, .note { font-size: 14px; color: var(--sub); }
+  .meta { margin-bottom: 32px; }
+  .sub { margin-bottom: 16px; }
+  a { color: var(--olive); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .rv { opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
+  .rv.in { opacity: 1; transform: none; }
+
+  .gate { background: var(--panel); border-radius: 16px; padding: 16px 20px; margin-bottom: 48px;
+          display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .gate label { font-size: 14px; font-weight: 600; }
+  input[type=text], input[type=password] {
+    font: inherit; font-size: 14px; padding: 10px 14px; color: var(--ink);
+    border: none; border-radius: 10px; background: var(--bubble); outline: none;
+    transition: box-shadow .3s var(--ease);
+  }
+  input:focus { box-shadow: 0 0 0 2px var(--olive); }
+  button {
+    font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    border: none; border-radius: 980px; padding: 10px 20px;
+    background: var(--panel); color: var(--ink);
+    transition: transform .3s var(--ease), box-shadow .3s var(--ease), opacity .3s var(--ease);
+  }
+  button.primary { background: var(--olive); color: #F5F2E4; }
+  button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(43,42,32,.12); }
+  button:active { transform: scale(.96); box-shadow: none; }
+  button:disabled { opacity: .35; cursor: default; transform: none; box-shadow: none; }
+
+  /* ── 텔레그램풍 채팅 ── */
+  .chatwin { background: var(--panel); border-radius: 20px; padding: 20px; margin-bottom: 12px; }
+  .chatlog { min-height: 140px; max-height: 440px; overflow-y: auto;
+             display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+  .m { display: flex; gap: 10px; max-width: 94%;
+       opacity: 0; transform: translateY(12px) scale(.98); transform-origin: left bottom;
+       animation: arrive .5s var(--ease) forwards; }
+  .m.me { align-self: flex-end; flex-direction: row-reverse; transform-origin: right bottom; }
+  @keyframes arrive { to { opacity: 1; transform: none; } }
+  .avatar { flex: none; width: 34px; height: 34px; border-radius: 50%;
+            background: var(--olive); color: #F5F2E4;
+            display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+  .m.critic .avatar { background: #8A7B4E; }
+  .m.me .avatar { background: #B7AB84; }
+  .who { font-size: 14px; font-weight: 600; color: var(--olive); }
+  .m.critic .who { color: #7A6B39; }
+  .m.me .who { text-align: right; color: var(--sub); }
+  .bub { background: var(--bubble); border-radius: 4px 16px 16px 16px;
+         padding: 10px 14px; margin-top: 4px; font-size: 14px; white-space: pre-wrap; line-height: 1.7; }
+  .m.me .bub { background: var(--bubble-me); border-radius: 16px 4px 16px 16px; }
+  .sysline { text-align: center; font-size: 14px; color: var(--sub); }
+  .typing { display: inline-flex; gap: 4px; padding: 14px; }
+  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--sub); animation: tp 1.2s infinite var(--ease); }
+  .typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+  @keyframes tp { 0%,60%,100% { opacity: .3; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+
+  .inrow { display: flex; gap: 8px; }
+  .inrow input { flex: 1; }
+  .runrow { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  select { font: inherit; font-size: 14px; padding: 10px 14px; border: none; border-radius: 10px;
+           background: var(--bubble); color: var(--ink); outline: none; }
+  footer { margin-top: 96px; padding-top: 24px; border-top: 1px solid var(--line);
+           font-size: 14px; color: var(--sub); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rv { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .m { animation: none; opacity: 1; transform: none; }
+    button, input { transition: none; }
+  }
 </style>
 </head>
 <body>
 
-<h1>에이전트 크루 직접 써보기</h1>
-<p class="meta">김우빈 개인 R&D 서버의 상주 에이전트에 실시간으로 연결됩니다 ·
+<h1 class="rv">에이전트 크루 직접 써보기</h1>
+<p class="meta rv">김우빈 개인 R&D 서버의 상주 에이전트에 실시간으로 연결됩니다 ·
   <a href="../">사례 설명</a> · <a href="https://github.com/obk1126/buzz-selfhost-kit">재현 킷</a></p>
 
-<p>아래 두 가지는 녹화나 시뮬레이션이 아니라, 지금 이 순간 제 서버에서 실제로 돌아가는
+<p class="rv">아래 두 가지는 녹화나 시뮬레이션이 아니라, 지금 이 순간 제 서버에서 실제로 돌아가는
 에이전트입니다. 데모 에이전트는 격리 워크스페이스에서 셸·파일 도구가 차단된 상태로 동작합니다.</p>
 
-<div class="gate">
+<div class="gate rv">
   <label for="code">접근코드</label>
   <input type="password" id="code" placeholder="지원서에 기재된 코드">
-  <span class="hint">하루 사용량이 제한된 데모라 코드가 필요합니다.</span>
+  <span class="note">하루 사용량이 제한된 데모라 코드가 필요합니다.</span>
 </div>
 
-<h2>1. 안내 에이전트와 대화</h2>
-<p class="sub">이 체계가 뭘 하는지 직접 물어보세요. 예: "교차 검증은 어떻게 하는 거야?", "운영하면서 뭐가 제일 어려웠어?"</p>
-<div class="chatbox" id="chat"><div class="bub sys">접근코드를 입력하고 메시지를 보내면 에이전트가 응답합니다. (응답에 10~30초 걸립니다)</div></div>
-<div class="inrow">
+<h2 class="rv">1. 안내 에이전트와 대화</h2>
+<p class="sub rv">이 체계가 뭘 하는지 직접 물어보세요. 예: "교차 검증은 어떻게 하는 거야?", "운영하면서 뭐가 제일 어려웠어?"</p>
+<div class="chatwin rv">
+  <div class="chatlog" id="chat"><div class="sysline">접근코드를 입력하고 메시지를 보내면 에이전트가 응답합니다. (10~30초)</div></div>
+</div>
+<div class="inrow rv">
   <input type="text" id="msg" maxlength="400" placeholder="메시지 입력 (한 세션 15턴 제한)">
   <button class="primary" id="send">보내기</button>
 </div>
 
-<h2>2. 크루 협업 관전 — 작성 → 적대적 검증 → 수정</h2>
-<p class="sub">과제를 투입하면 작성 에이전트가 초안을 쓰고, 검증 에이전트가 "빠진 것 · 틀린 가정 · 약한 근거" 3가지를
-지적하고, 작성 에이전트가 지적을 반영해 최종본을 만듭니다. 제 크루가 실제 산출물을 다루는 방식 그대로입니다. (총 1~3분)</p>
-<div class="runrow">
+<h2 class="rv">2. 크루 협업 관전 — 작성 → 적대적 검증 → 수정</h2>
+<p class="sub rv">과제를 투입하면 작성 에이전트가 초안을 쓰고, 검증 에이전트가 "빠진 것 · 틀린 가정 · 약한 근거"를
+지적하고, 작성 에이전트가 반영해 최종본을 만듭니다. 크루가 실제 산출물을 다루는 방식 그대로입니다. (1~3분)</p>
+<div class="runrow rv">
   <select id="topic">
     <option value="onboarding">과제: 신입 첫 주 온보딩 안내문</option>
     <option value="briefing">과제: 팀 주간 브리핑 템플릿</option>
     <option value="incident">과제: 서비스 장애 공지문</option>
   </select>
   <button id="run">협업 시작</button>
-  <span class="spin" id="spin"></span>
+  <span class="note" id="spin"></span>
 </div>
-<div class="steps" id="steps"></div>
+<div class="chatwin rv" id="stepswin" style="display:none">
+  <div class="chatlog" id="steps"></div>
+</div>
 
-<footer>
+<footer class="rv">
   김우빈 · <a href="mailto:oobin765@gmail.com">oobin765@gmail.com</a> ·
   <a href="../">개인 AX 사례 페이지</a><br>
   남용 방지를 위해 대화 내용은 서버 운영 로그에 남을 수 있습니다. 개인정보는 입력하지 말아 주세요.
@@ -94,17 +142,29 @@
 <script>
 const API = "https://duo-km.duckdns.org/axdemo";
 const $ = id => document.getElementById(id);
+const io = new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.12});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
 const sid = (localStorage.getItem("ax-sid") || (() => { const s = Math.random().toString(36).slice(2,10); localStorage.setItem("ax-sid", s); return s; })());
 $("code").value = localStorage.getItem("ax-code") || "";
 $("code").addEventListener("change", () => localStorage.setItem("ax-code", $("code").value.trim()));
 
-function bub(cls, who, text) {
+function msgEl(box, cls, who, avatarTxt, text) {
   const d = document.createElement("div");
-  d.className = "bub " + cls;
-  d.innerHTML = who ? `<span class="who">${who}</span><br>` : "";
-  d.appendChild(document.createTextNode(text));
-  $("chat").appendChild(d); $("chat").scrollTop = 1e9;
+  d.className = "m " + cls;
+  const av = document.createElement("div"); av.className = "avatar"; av.textContent = avatarTxt;
+  const body = document.createElement("div");
+  if (who) { const w = document.createElement("div"); w.className = "who"; w.textContent = who; body.appendChild(w); }
+  const b = document.createElement("div"); b.className = "bub";
+  if (text === "…") { b.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>'; b.style.padding = "4px 10px"; }
+  else b.textContent = text;
+  body.appendChild(b); d.appendChild(av); d.appendChild(body);
+  box.appendChild(d); box.scrollTop = 1e9;
   return d;
+}
+function sysEl(box, text) {
+  const d = document.createElement("div"); d.className = "sysline"; d.textContent = text;
+  box.appendChild(d); box.scrollTop = 1e9; return d;
 }
 async function post(path, body) {
   const r = await fetch(API + path, { method:"POST", headers:{ "Content-Type":"application/json" },
@@ -116,36 +176,42 @@ async function post(path, body) {
 $("send").onclick = async () => {
   const m = $("msg").value.trim();
   if (!m) return;
-  if (!$("code").value.trim()) return bub("sys","", "접근코드를 먼저 입력해 주세요.");
-  $("msg").value = ""; bub("me","나", m);
+  if (!$("code").value.trim()) return sysEl($("chat"), "접근코드를 먼저 입력해 주세요.");
+  $("msg").value = ""; msgEl($("chat"), "me", "", "나", m);
   $("send").disabled = true;
-  const w = bub("sys","", "에이전트가 생각 중…");
-  try { const j = await post("/chat", { session: sid, message: m }); w.remove(); bub("bot","안내 에이전트", j.reply); }
-  catch (e) { w.remove(); bub("sys","", "⚠ " + e.message); }
+  const w = msgEl($("chat"), "", "안내 에이전트", "안", "…");
+  try { const j = await post("/chat", { session: sid, message: m }); w.remove(); msgEl($("chat"), "", "안내 에이전트", "안", j.reply); }
+  catch (e) { w.remove(); sysEl($("chat"), "⚠ " + e.message); }
   $("send").disabled = false;
 };
 $("msg").addEventListener("keydown", e => { if (e.key === "Enter") $("send").onclick(); });
 
+const ROLE = { writer: ["", "작성 에이전트", "작"], critic: ["critic", "검증 에이전트", "검"] };
 let polling = null;
 $("run").onclick = async () => {
   if (!$("code").value.trim()) { $("spin").textContent = "접근코드를 먼저 입력해 주세요."; return; }
-  $("run").disabled = true; $("steps").innerHTML = ""; $("spin").textContent = "과제 투입 중…";
+  $("run").disabled = true; $("stepswin").style.display = "block";
+  const box = $("steps"); box.innerHTML = ""; $("spin").textContent = "과제 투입 중…";
+  let typingEl = null;
   try {
     const { id } = await post("/collab", { topic: $("topic").value });
     let shown = 0;
     polling = setInterval(async () => {
       const r = await fetch(`${API}/collab/${id}`); const j = await r.json();
       for (; shown < j.steps.length; shown++) {
+        if (typingEl) { typingEl.remove(); typingEl = null; }
         const s = j.steps[shown];
-        const d = document.createElement("div");
-        d.className = "step " + s.role;
-        d.innerHTML = `<span class="lab">${s.label || "진행"}</span>`;
-        d.appendChild(document.createTextNode(s.text));
-        $("steps").appendChild(d);
+        if (s.role === "system") sysEl(box, s.text);
+        else { const [cls, who, av] = ROLE[s.role] || ROLE.writer; msgEl(box, cls, s.label || who, av, s.text); }
       }
-      $("spin").textContent = j.status === "running" ? `에이전트 작업 중… (${j.steps.length}/4 단계)` : "";
-      if (j.status !== "running") { clearInterval(polling); $("run").disabled = false;
-        if (j.status === "done") $("spin").textContent = "완료 — 검증 지적이 최종본에 어떻게 반영됐는지 비교해 보세요."; }
+      if (j.status === "running") {
+        $("spin").textContent = `에이전트 작업 중… (${j.steps.length}/4 단계)`;
+        if (!typingEl) { const next = j.steps.length === 2 ? ROLE.critic : ROLE.writer; typingEl = msgEl(box, next[0], next[1], next[2], "…"); }
+      } else {
+        if (typingEl) { typingEl.remove(); typingEl = null; }
+        clearInterval(polling); $("run").disabled = false;
+        $("spin").textContent = j.status === "done" ? "완료 — 지적이 최종본에 어떻게 반영됐는지 비교해 보세요." : "오류로 중단됐습니다.";
+      }
     }, 4000);
   } catch (e) { $("spin").textContent = "⚠ " + e.message; $("run").disabled = false; }
 };
