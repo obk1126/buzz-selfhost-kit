@@ -1,0 +1,6 @@
+{
+  "code": "<접근코드 — 실서버 /root/axdemo-bridge/config.json 참조>",
+  "origins": ["https://obk1126.github.io"],
+  "dockerGatewayIp": "172.16.1.1",
+  "limits": { "chatPerDay": 80, "chatPerSession": 15, "threadPerDay": 10 }
+}

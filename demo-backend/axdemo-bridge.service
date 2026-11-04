@@ -1,0 +1,11 @@
+[Unit]
+Description=axdemo web demo bridge
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/node /root/axdemo-bridge/server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
