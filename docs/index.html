@@ -2,273 +2,407 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI 에이전트 크루와 함께 일하기 — 개인 AX 사례 · 김우빈</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AX Crew — 라이브 멀티에이전트 워크스페이스</title>
 <style>
   :root {
-    --bg: #F0ECDE;         /* 베이지 */
-    --panel: #E9E4D2;      /* 한 톤 깊은 패널 */
-    --bubble: #FBF9F1;     /* 에이전트 말풍선 */
-    --bubble-me: #DCE0C2;  /* 올리브 틴트 */
-    --ink: #2B2A20;
-    --sub: #6F6A55;
-    --olive: #55602F;      /* 유일한 강조색 */
-    --line: #DED8C4;
-    --ease: cubic-bezier(0.32, 0.72, 0, 1);   /* 애플풍 이징 */
+    --bg: #F0ECDE; --side: #E7E2CF; --panel: #E9E4D2;
+    --bubble: #FCFAF2; --bubble-me: #DCE0C2;
+    --ink: #2B2A20; --sub: #6F6A55; --olive: #55602F; --line: #DBD4BE;
+    --naru: #55602F; --gyeol: #8A7B4E; --me: #B2A77E;
+    --ease: cubic-bezier(0.32, 0.72, 0, 1);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  html { scroll-behavior: smooth; }
+  html, body { height: 100%; }
   body {
     background: var(--bg); color: var(--ink);
     font-family: "Apple SD Gothic Neo", "Pretendard", -apple-system, "Noto Sans KR", sans-serif;
-    font-size: 16px; line-height: 1.8;
-    max-width: 680px; margin: 0 auto; padding: 96px 24px 120px;
-    -webkit-font-smoothing: antialiased;
+    font-size: 16px; line-height: 1.7; -webkit-font-smoothing: antialiased; overflow: hidden;
   }
-  h1, h2 { font-family: "Noto Serif KR", "Apple SD Gothic Neo", Georgia, serif; font-weight: 600; letter-spacing: -0.01em; }
-  h1 { font-size: 30px; line-height: 1.3; margin-bottom: 12px; }
-  h2 { font-size: 20px; margin: 96px 0 16px; }
-  p  { margin-bottom: 16px; }
-  .meta, .note { font-size: 14px; color: var(--sub); }
-  .meta { margin-bottom: 48px; }
-  a { color: var(--olive); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  .lead { color: var(--sub); margin-bottom: 32px; }
-  .cta {
-    display: inline-block; background: var(--olive); color: #F5F2E4;
-    padding: 14px 28px; border-radius: 980px; font-weight: 600;
-    transition: transform .35s var(--ease), box-shadow .35s var(--ease);
-    will-change: transform;
+  .serif { font-family: "Noto Serif KR", "Apple SD Gothic Neo", Georgia, serif; }
+
+  /* ── 앱 셸 ─────────────────────────── */
+  .app { display: flex; height: 100dvh; }
+  aside {
+    width: 272px; flex: none; background: var(--side);
+    display: flex; flex-direction: column; padding: 20px 12px 16px;
+    border-right: 1px solid var(--line);
   }
-  .cta:hover { text-decoration: none; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(43,42,32,.14); }
-  .cta:active { transform: translateY(0) scale(.97); box-shadow: none; }
-
-  /* ── 스크롤 리빌 (애플풍) ── */
-  .rv { opacity: 0; transform: translateY(18px); transition: opacity .7s var(--ease), transform .7s var(--ease); }
-  .rv.in { opacity: 1; transform: none; }
-
-  /* ── 텔레그램풍 크루 대화 ── */
-  .chatwin { background: var(--panel); border-radius: 20px; padding: 24px 20px; margin: 24px 0 8px; }
-  .chatbar { font-size: 14px; color: var(--sub); text-align: center; margin-bottom: 20px; }
-  .chatbar b { color: var(--ink); font-weight: 600; }
-  .chatlog { display: flex; flex-direction: column; gap: 14px; }
-  .m { display: flex; gap: 10px; max-width: 94%;
-       opacity: 0; transform: translateY(14px) scale(.98); transform-origin: left bottom;
-       transition: opacity .55s var(--ease), transform .55s var(--ease); }
-  .m.in { opacity: 1; transform: none; }
-  .avatar {
-    flex: none; width: 34px; height: 34px; border-radius: 50%;
-    background: var(--olive); color: #F5F2E4;
+  .brand { display: flex; gap: 12px; align-items: center; padding: 4px 8px 20px; }
+  .logo {
+    width: 40px; height: 40px; border-radius: 12px; background: var(--olive); color: #F5F2E4;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700;
+    font-family: Georgia, serif; font-weight: 700; font-size: 16px; letter-spacing: .02em;
   }
-  .m.alt .avatar { background: #8A7B4E; }
-  .m .who { font-size: 14px; font-weight: 600; color: var(--olive); }
-  .m .who time { font-weight: 400; color: var(--sub); margin-left: 6px; font-size: 14px; }
-  .m.alt .who { color: #7A6B39; }
-  .bub { background: var(--bubble); border-radius: 4px 16px 16px 16px;
-         padding: 10px 14px; margin-top: 4px; font-size: 14px; white-space: pre-wrap; line-height: 1.7; }
-  .m.alt .bub { background: var(--bubble-me); }
-  .sysline { text-align: center; font-size: 14px; color: var(--sub); margin-top: 6px;
-             opacity: 0; transition: opacity .7s var(--ease) .15s; }
-  .sysline.in { opacity: 1; }
+  .brand b { display: block; font-size: 16px; line-height: 1.3; }
+  .conn { font-size: 14px; color: var(--sub); display: flex; align-items: center; gap: 6px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #B9B29A; transition: background .4s; }
+  .dot.on { background: #5E7D34; }
+  .sect { font-size: 14px; color: var(--sub); padding: 16px 8px 6px; font-weight: 600; }
+  .chan {
+    display: flex; width: 100%; align-items: center; gap: 10px; text-align: left;
+    font: inherit; font-size: 16px; color: var(--ink); background: none; border: none;
+    padding: 9px 10px; border-radius: 10px; cursor: pointer;
+    transition: background .25s var(--ease), transform .25s var(--ease);
+  }
+  .chan:hover { background: rgba(43,42,32,.05); }
+  .chan:active { transform: scale(.985); }
+  .chan.on { background: var(--olive); color: #F5F2E4; }
+  .chan.on small, .chan.on .hash { color: #D9DCC2; }
+  .chan .hash { color: var(--sub); font-weight: 600; }
+  .chan small { font-size: 14px; color: var(--sub); margin-left: auto; }
+  .avch { width: 26px; height: 26px; border-radius: 50%; flex: none; color: #F5F2E4;
+          display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; position: relative; }
+  .avch i { position: absolute; right: -1px; bottom: -1px; width: 9px; height: 9px; border-radius: 50%;
+            background: #B9B29A; border: 2px solid var(--side); }
+  .avch i.on { background: #5E7D34; }
+  .links { margin-top: auto; padding: 16px 8px 0; display: flex; flex-direction: column; gap: 8px; }
+  .links a { font-size: 14px; color: var(--sub); text-decoration: none; }
+  .links a:hover { color: var(--olive); }
+  .fineprint { font-size: 14px; color: var(--sub); opacity: .7; padding: 12px 8px 0; line-height: 1.5; }
 
-  /* ── 표·다이어그램·접기 ── */
-  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14px; }
-  th { text-align: left; font-weight: 600; padding: 8px 8px; border-bottom: 1px solid var(--ink); }
-  td { padding: 12px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  .diagram { background: var(--panel); border-radius: 20px; padding: 24px; margin: 16px 0 24px;
-             overflow-x: auto; white-space: pre;
-             font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 14px; line-height: 1.6; }
-  ul { margin: 0 0 16px 20px; }
-  li { margin-bottom: 8px; }
-  details { border-bottom: 1px solid var(--line); }
-  summary { cursor: pointer; padding: 16px 4px; font-weight: 600; list-style: none; display: flex; gap: 12px; align-items: baseline; }
-  summary::before { content: "+"; color: var(--olive); font-weight: 600; transition: transform .35s var(--ease); }
-  details[open] summary::before { transform: rotate(45deg); }
-  summary:hover { color: var(--olive); }
-  details p { padding: 0 4px 16px 24px; margin: 0; font-size: 14px; color: var(--sub); }
-  code { font-family: ui-monospace, Menlo, monospace; font-size: 14px;
-         background: var(--panel); padding: 1px 6px; border-radius: 6px; }
-  footer { margin-top: 96px; padding-top: 24px; border-top: 1px solid var(--line);
-           font-size: 14px; color: var(--sub); }
+  main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  header {
+    padding: 16px 24px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 12px; background: var(--bg);
+  }
+  .menu { display: none; }
+  header h1 { font-size: 16px; font-weight: 700; }
+  header p { font-size: 14px; color: var(--sub); }
 
+  .log { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 14px;
+         scroll-behavior: smooth; }
+  .intro {
+    align-self: center; max-width: 440px; text-align: center; margin: auto;
+    opacity: 0; transform: translateY(14px); animation: arrive .7s var(--ease) .1s forwards;
+  }
+  .intro .ic { width: 56px; height: 56px; border-radius: 18px; background: var(--panel);
+               display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+               font-size: 20px; color: var(--olive); font-weight: 700; }
+  .intro h2 { font-size: 20px; margin-bottom: 8px; }
+  .intro p { font-size: 14px; color: var(--sub); }
+  .m { display: flex; gap: 10px; max-width: 86%;
+       opacity: 0; transform: translateY(12px) scale(.98); transform-origin: left bottom;
+       animation: arrive .5s var(--ease) forwards; }
+  @keyframes arrive { to { opacity: 1; transform: none; } }
+  .m.me { align-self: flex-end; flex-direction: row-reverse; transform-origin: right bottom; }
+  .av { flex: none; width: 34px; height: 34px; border-radius: 50%; color: #F5F2E4;
+        display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+  .who { font-size: 14px; font-weight: 600; }
+  .who time { font-weight: 400; color: var(--sub); margin-left: 6px; }
+  .m.me .who { text-align: right; color: var(--sub); }
+  .bub { border-radius: 4px 16px 16px 16px; padding: 10px 14px; margin-top: 4px;
+         font-size: 15px; white-space: pre-wrap; background: var(--bubble); line-height: 1.7;
+         box-shadow: 0 1px 2px rgba(43,42,32,.04); }
+  .m.me .bub { background: var(--bubble-me); border-radius: 16px 4px 16px 16px; }
+  .sys { align-self: center; font-size: 14px; color: var(--sub);
+         background: var(--panel); border-radius: 999px; padding: 4px 14px;
+         opacity: 0; animation: arrive .5s var(--ease) forwards; }
+  .typing { display: inline-flex; gap: 4px; padding: 6px 2px; }
+  .typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--sub);
+              animation: tp 1.2s infinite var(--ease); }
+  .typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+  @keyframes tp { 0%,60%,100% { opacity: .3; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+
+  .composer { padding: 16px 24px 20px; }
+  .crow { display: flex; gap: 10px; align-items: flex-end;
+          background: var(--bubble); border-radius: 22px; padding: 8px 8px 8px 18px;
+          box-shadow: 0 1px 3px rgba(43,42,32,.06); transition: box-shadow .3s var(--ease); }
+  .crow:focus-within { box-shadow: 0 0 0 2px var(--olive); }
+  .crow textarea {
+    flex: 1; font: inherit; font-size: 15px; border: none; outline: none; background: none;
+    resize: none; max-height: 120px; line-height: 1.5; padding: 6px 0; color: var(--ink);
+  }
+  .sendbtn {
+    width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; flex: none;
+    background: var(--olive); color: #F5F2E4; font-size: 16px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .3s var(--ease), opacity .3s var(--ease);
+  }
+  .sendbtn:hover { transform: translateY(-1px); }
+  .sendbtn:active { transform: scale(.9); }
+  .sendbtn:disabled { opacity: .3; cursor: default; transform: none; }
+  .chint { font-size: 14px; color: var(--sub); opacity: .75; padding: 8px 6px 0; text-align: center; }
+
+  /* ── 게이트 ─────────────────────────── */
+  .gate {
+    position: fixed; inset: 0; z-index: 10; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity .6s var(--ease), transform .6s var(--ease);
+  }
+  .gate.out { opacity: 0; transform: scale(1.04); pointer-events: none; }
+  .gcard { width: min(400px, calc(100vw - 48px)); text-align: center; }
+  .gmark { display: flex; gap: 8px; justify-content: center; margin-bottom: 28px; }
+  .gmark i { width: 12px; height: 12px; border-radius: 50%; background: var(--olive);
+             opacity: .25; animation: pulse 2.4s var(--ease) infinite; }
+  .gmark i:nth-child(2){animation-delay:.2s} .gmark i:nth-child(3){animation-delay:.4s}
+  .gmark i:nth-child(4){animation-delay:.6s} .gmark i:nth-child(5){animation-delay:.8s}
+  @keyframes pulse { 0%,100% { opacity:.25; transform:none; } 50% { opacity:1; transform: translateY(-4px); } }
+  .gcard h1 { font-size: 28px; margin-bottom: 8px; }
+  .gcard > p { font-size: 15px; color: var(--sub); margin-bottom: 32px; }
+  .grow { display: flex; gap: 8px; }
+  .grow input {
+    flex: 1; font: inherit; font-size: 16px; text-align: center; letter-spacing: .06em;
+    padding: 13px 16px; border: none; border-radius: 14px; background: var(--bubble);
+    color: var(--ink); outline: none; transition: box-shadow .3s var(--ease);
+  }
+  .grow input:focus { box-shadow: 0 0 0 2px var(--olive); }
+  .grow button {
+    font: inherit; font-size: 16px; font-weight: 600; border: none; cursor: pointer;
+    background: var(--olive); color: #F5F2E4; border-radius: 14px; padding: 0 24px;
+    transition: transform .3s var(--ease), opacity .3s; }
+  .grow button:hover { transform: translateY(-1px); }
+  .grow button:active { transform: scale(.96); }
+  .gerr { font-size: 14px; color: #8A3B2E; margin-top: 12px; min-height: 22px; }
+  .shake { animation: shake .45s var(--ease); }
+  @keyframes shake { 0%,100%{transform:none} 25%{transform:translateX(-8px)} 55%{transform:translateX(6px)} 80%{transform:translateX(-3px)} }
+  .gnote { font-size: 14px; color: var(--sub); opacity: .8; margin-top: 40px; line-height: 1.6; }
+  .gnote a { color: var(--olive); text-decoration: none; }
+
+  /* ── 모바일 ─────────────────────────── */
+  .backdrop { display: none; }
+  @media (max-width: 880px) {
+    aside { position: fixed; inset: 0 auto 0 0; z-index: 6; transform: translateX(-100%);
+            transition: transform .45s var(--ease); width: 280px; }
+    aside.open { transform: none; box-shadow: 24px 0 48px rgba(43,42,32,.18); }
+    .backdrop { display: block; position: fixed; inset: 0; z-index: 5; background: rgba(43,42,32,.25);
+                opacity: 0; pointer-events: none; transition: opacity .45s var(--ease); }
+    .backdrop.show { opacity: 1; pointer-events: auto; }
+    .menu { display: flex; border: none; background: none; cursor: pointer; padding: 4px;
+            flex-direction: column; gap: 4px; }
+    .menu i { width: 18px; height: 2px; background: var(--ink); border-radius: 2px; }
+    .log { padding: 16px; } .composer { padding: 12px 16px 16px; }
+  }
   @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    .rv, .m, .sysline { opacity: 1 !important; transform: none !important; transition: none !important; }
-    .cta { transition: none; }
+    .m, .sys, .intro { animation: none !important; opacity: 1 !important; transform: none !important; }
+    .gate, .chan, .sendbtn, .grow button { transition: none !important; }
+    .gmark i { animation: none; opacity: .8; }
   }
 </style>
 </head>
 <body>
 
-<h1 class="rv">AI 에이전트 크루와 함께 일하기</h1>
-<p class="meta rv">개인 서버에 AI 에이전트 5기를 상주시켜 반복 업무를 위임한 개인 AX 사례 · 김우빈 ·
-  2026.08 구축, 현재 운영 중 · <a href="https://github.com/obk1126/buzz-selfhost-kit">재현 킷 (오픈소스)</a></p>
-
-<p class="lead rv">
-  "AI를 업무에 쓴다"를 채팅창에 질문하는 수준에서 끝내지 않고,
-  반복 업무를 task 단위로 분해해 에이전트에게 역할로 위임하고,
-  사람 없이도 매주 돌아가는 체계로 정착시킨 기록입니다.
-</p>
-<p class="rv">
-  <a class="cta" href="try/">에이전트 크루 직접 써보기 →</a><br><br>
-  <span class="note">읽는 데모가 아닙니다 — 지금 서버에서 돌고 있는 에이전트와 대화하고,
-  아래 같은 협업을 실시간으로 관전할 수 있습니다 (접근코드 필요).</span>
-</p>
-
-<h2 class="rv">크루가 일하는 장면</h2>
-<p class="note rv">2026-11-04 협업 데모 실기록 발췌 — 각색 없음, 에이전트 산출물 그대로입니다.</p>
-<div class="chatwin rv" id="chatwin">
-  <div class="chatbar"><b>크루 채널 — 산출물 교차 검증</b> · 과제: 서비스 장애 공지문</div>
-  <div class="chatlog">
-    <div class="m">
-      <div class="avatar">작</div>
-      <div>
-        <div class="who">작성 에이전트 <time>21:32</time></div>
-        <div class="bub">[상황] 11월 4일 오후 8시 42분경부터 약 35분간 로그인 및 주요 기능 접속 장애가 발생했습니다.
-[조치] 9시 17분 문제 인지 즉시 서버 자원을 증설하고 비정상 프로세스를 재시작, 9시 20분경 정상화했습니다.</div>
-      </div>
+<div class="gate" id="gate">
+  <div class="gcard">
+    <div class="gmark"><i></i><i></i><i></i><i></i><i></i></div>
+    <h1 class="serif">AX Crew</h1>
+    <p>개인 R&D 서버에서 상주 중인 AI 에이전트 크루에 연결합니다.<br>녹화나 대본이 아니라, 지금 돌아가는 실제 에이전트입니다.</p>
+    <div class="grow" id="grow">
+      <input type="password" id="gcode" placeholder="접근코드" autocomplete="off">
+      <button id="genter">입장</button>
     </div>
-    <div class="m alt">
-      <div class="avatar">검</div>
-      <div>
-        <div class="who">검증 에이전트 <time>21:33</time></div>
-        <div class="bub">[빠진 것] 영향 사용자 규모, 데이터 손실 여부, 보상·문의 채널 안내가 없다.
-[틀린 가정] "약 35분"이라더니 8:42~9:20이면 38분 — 수치가 서로 어긋난다.
-[약한 근거] 부하가 왜 증가했는지 원인 분석 없이 "일시적 부하"라고만 썼다.</div>
-      </div>
-    </div>
-    <div class="m">
-      <div class="avatar">작</div>
-      <div>
-        <div class="who">작성 에이전트 <time>21:34</time></div>
-        <div class="bub">지적 반영했습니다 — 장애 시간 38분으로 정정, 영향 범위(전체의 약 15%)와 "데이터 손실 없음" 명시, 원인을 배포 쿼리 부하로 특정하고 보상·문의 채널을 추가한 최종본입니다.</div>
-      </div>
-    </div>
-    <div class="sysline">검증 통과 · 최종본 확정 — 3단계, 사람 개입 0회</div>
+    <div class="gerr" id="gerr"></div>
+    <p class="gnote">하루 사용량이 제한된 데모라 접근코드가 필요합니다 (지원서에 기재).<br>
+      <a href="about/">이 체계가 뭔지 먼저 읽어보기</a> · <a href="https://github.com/obk1126/buzz-selfhost-kit">재현 킷 (GitHub)</a></p>
   </div>
 </div>
-<p class="note rv">이 "작성 → 적대적 검증 → 수정" 루프가 크루의 기본 작업 단위입니다.
-실전에서는 이 루프가 문서의 법적 리스크 표현을 배포 전에 잡아냈습니다.</p>
 
-<h2 class="rv">1. 어떤 문제였나</h2>
-<div class="rv">
-<p>
-  혼자 여러 프로젝트를 병행하면 반복 업무가 쌓입니다. 기록을 지식베이스에 옮기는 일,
-  메신저 요청을 처리하고 정리하는 일, 매일 아침 상황 점검. 각각은 10~30분짜리지만
-  매일·매주 반복되고, 미루면 지식이 휘발됩니다.
-</p>
-<p>
-  핵심 판단은 <strong>"AI 도구를 더 쓰자"가 아니라 "업무를 분해해 위임 가능한 단위를 찾자"</strong>였습니다.
-  사람의 판단(무엇을 남길지)과 기계의 실행(수집·변환·게시·검증)을 분리하는 것부터 시작했습니다.
-</p>
+<div class="app">
+  <div class="backdrop" id="backdrop"></div>
+  <aside id="sb">
+    <div class="brand">
+      <div class="logo serif">AX</div>
+      <div><b>AX Crew</b><span class="conn"><span class="dot" id="conndot"></span><span id="conntxt">연결 확인 중</span></span></div>
+    </div>
+    <div class="sect">채널</div>
+    <button class="chan" data-ch="lounge"><span class="hash">#</span> 크루-라운지</button>
+    <button class="chan" data-ch="review"><span class="hash">#</span> 검증-파이프라인</button>
+    <div class="sect">크루</div>
+    <button class="chan" data-ch="naru"><span class="avch" style="background:var(--naru)">나<i id="p-naru"></i></span> 나루 <small>안내·문서</small></button>
+    <button class="chan" data-ch="gyeol" disabled style="cursor:default"><span class="avch" style="background:var(--gyeol)">결<i id="p-gyeol"></i></span> 결 <small>검증 · 채널 전용</small></button>
+    <div class="links">
+      <a href="about/">이 체계에 대하여 (사례 설명)</a>
+      <a href="https://github.com/obk1126/buzz-selfhost-kit">재현 킷 — GitHub</a>
+      <a href="mailto:oobin765@gmail.com">김우빈에게 연락</a>
+    </div>
+    <div class="fineprint">격리 워크스페이스 · 셸/파일 도구 차단 · 대화는 운영 로그에 남을 수 있습니다. 개인정보는 입력하지 마세요.</div>
+  </aside>
+
+  <main>
+    <header>
+      <button class="menu" id="menubtn" aria-label="메뉴"><i></i><i></i><i></i></button>
+      <div><h1 id="chname"></h1><p id="chdesc"></p></div>
+    </header>
+    <div class="log" id="log"></div>
+    <div class="composer">
+      <div class="crow">
+        <textarea id="input" rows="1" maxlength="300"></textarea>
+        <button class="sendbtn" id="send" aria-label="보내기">↑</button>
+      </div>
+      <div class="chint" id="chint"></div>
+    </div>
+  </main>
 </div>
-
-<h2 class="rv">2. 무엇이 실제로 돌아가고 있나</h2>
-<div class="rv">
-<p>에이전트 5기가 역할을 나눠 맡고, 아래 업무가 사람 개입 없이 정기 실행됩니다.</p>
-<table>
-  <tr><th>업무</th><th>주기</th><th>사람이 하던 것 → 지금</th></tr>
-  <tr>
-    <td>지식 자산 역수입</td><td>매주</td>
-    <td>에이전트들이 실전에서 기록한 운영 문서를 개인 지식베이스로 자동 인제스트 → 깃 커밋·푸시. 방법론 노트 17종 자산화</td>
-  </tr>
-  <tr>
-    <td>메신저 상주 응대</td><td>상시</td>
-    <td>슬랙·텔레그램 멘션으로 문서 작성·데이터 추출·파일 처리, 스레드 단위 맥락 유지</td>
-  </tr>
-  <tr>
-    <td>산출물 교차 검증</td><td>작업마다</td>
-    <td>한 에이전트의 산출물을 다른 에이전트가 적대적으로 검증 — 법적 리스크 표현 사전 적발 이력</td>
-  </tr>
-  <tr>
-    <td>야간 자가 점검</td><td>매일</td>
-    <td>진행 중 작업을 기다렸다가 클린 재기동, 완료 후 상태 보고 (워치독·자가치유)</td>
-  </tr>
-</table>
-<p class="note">구체 수치·내부 기록은 공개 범위에서 제외했습니다. 대신 체계 전체를 재현할 수 있는 킷을 공개합니다.</p>
-</div>
-
-<h2 class="rv">3. 구조 — 사람 1 × 에이전트 5</h2>
-<div class="rv">
-<div class="diagram">사람 (슬랙·텔레그램 멘션 / 워크스페이스 앱 · 모바일 QR 페어링)
-   │  채널에서 멘션 / 정기 워크플로우(cron)
-   ▼
-자체 VPS ─ 메신저 브리지 + 셀프호스팅 워크스페이스 (Block Buzz 릴레이)
-   │  공유 컨텍스트 · 공동 원장 · 서명 감사추적
-   ├─ A 총괄·검증   ├─ B 문서화·지식   ├─ C 데이터·자동화
-   ├─ D 개발·스크립트   └─ E 브리핑·모니터링   (전원 systemd 상주)
-        ↳ 기반: Claude Code / Codex — 기존 구독 로그인, API 키 불필요</div>
-<ul>
-  <li><strong>외부 SaaS 종속 없음</strong> — 오픈소스 릴레이 직접 호스팅. 데이터·감사추적이 내 서버에 남습니다.</li>
-  <li><strong>비용 설계</strong> — API 과금이 아니라 기존 구독 인증으로 동작하는 하네스.</li>
-  <li><strong>기억 격벽</strong> — 에이전트별 기억 분리, 작업 사실은 공동 원장에만 기록.</li>
-</ul>
-</div>
-
-<h2 class="rv">4. 운영하며 수업료 낸 것들</h2>
-<div class="rv">
-<p>구축은 하루, 정착은 두 달. 실제로 겪은 운영 함정 9가지를 전부 문서화해 킷에 포함했습니다.</p>
-<details><summary>테넌트 라우팅 — localhost 직결이 404가 나는 이유</summary>
-  <p>릴레이는 Host 헤더로 커뮤니티를 찾는다. 서버 내부에서도 반드시 도메인(wss)으로 접속해야 한다.</p></details>
-<details><summary>CORS와 데스크톱 앱 — 서버 로그에도 안 남는 실패</summary>
-  <p>앱 대부분은 네이티브 통신이지만 초대 발급 등 일부만 웹뷰 fetch라 CORS를 탄다. 프리플라이트 차단은 서버에 도달조차 않아 로그로 원인을 못 찾는다.</p></details>
-<details><summary>모바일 QR 페어링 404</summary>
-  <p>페어링은 전용 사이드카가 받는다. 릴레이 이미지에 바이너리는 있지만 기본 compose에는 없어 별도 기동이 필요하다.</p></details>
-<details><summary>이미지 메타데이터 전면 거부</summary>
-  <p>릴레이는 JPEG의 EXIF·ICC까지 전부 거부(422)한다. 생성 이미지·촬영본은 메타데이터를 벗겨서 올려야 한다.</p></details>
-<details><summary>CLI 첨부 화이트리스트</summary>
-  <p>CLI가 클라이언트 단에서 이미지 4종+mp4만 허용한다. 문서 첨부는 릴레이가 아니라 CLI 쪽 패치가 필요하다.</p></details>
-<details><summary>응답 게이트 이중 잠금 — 소리 없이 버려지는 멘션</summary>
-  <p>멤버 전용 릴레이에서 허용목록 설정은 이중 잠금이 된다. 신규 멤버의 멘션이 에러 없이 사라진다. 폐쇄 릴레이라면 게이트를 여는 쪽이 맞다.</p></details>
-<details><summary>root 실행과 샌드박스 플래그</summary>
-  <p>root에서 에이전트 하네스는 샌드박스 플래그 없이는 권한 모드를 거부한다.</p></details>
-<details><summary>작업 디렉토리 오염 — 세션이 멈추는 조건</summary>
-  <p>세션 아카이브가 쌓인 작업공간을 그대로 주면 SDK 세션이 멈춘다. 에이전트별 클린 작업공간 + 필요한 기억만 심볼릭 링크.</p></details>
-<details><summary>워크플로우 cron은 UTC — 요일까지 환산</summary>
-  <p>평일 08:30 KST는 <code>30 23 * * SUN-THU</code>다. 요일 숫자 0은 거부되므로 이름 표기가 안전하다.</p></details>
-</div>
-
-<h2 class="rv">5. 왜 공개했나 — 확산이 목적</h2>
-<div class="rv">
-<p>
-  이 체계의 가치는 "내 서버에서 돌아간다"가 아니라 <strong>"남도 반나절이면 같은 체계를 세울 수 있다"</strong>에 있습니다.
-  설치 스크립트, systemd 템플릿, 정기 업무 예시, 운영 함정 대장, 이관 3층 체크리스트(인격·기억·정기 업무)까지
-  재현에 필요한 전부를 공개했습니다.
-</p>
-<p><a href="https://github.com/obk1126/buzz-selfhost-kit"><strong>재현 킷 — github.com/obk1126/buzz-selfhost-kit →</strong></a></p>
-</div>
-
-<h2 class="rv">6. 이 사례가 말하는 것</h2>
-<ul class="rv">
-  <li><strong>업무를 task로 분해하는 눈</strong> — 판단과 실행을 분리하고, 실행을 역할 단위로 위임하는 설계.</li>
-  <li><strong>도입이 아니라 정착</strong> — 두 달의 운영: 자가치유, 교차 검증, 기억 격벽, 함정 문서화.</li>
-  <li><strong>확산 가능한 형태로 남기기</strong> — 한 사람의 노하우를 다음 사람의 반나절로 바꾸는 것.</li>
-</ul>
-
-<footer class="rv">
-  김우빈 · <a href="mailto:oobin765@gmail.com">oobin765@gmail.com</a><br>
-  함께 보기: 요즘IT 기고 〈중소·중견 AX는 만든 사람이 떠난 뒤에 시작된다〉(2026.09) 외
-</footer>
 
 <script>
-  const io = new IntersectionObserver((es) => {
-    es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.rv').forEach(el => io.observe(el));
+const API = "https://duo-km.duckdns.org/axdemo";
+const $ = id => document.getElementById(id);
+const sid = (localStorage.getItem("ax-sid") || (() => { const s = Math.random().toString(36).slice(2,10); localStorage.setItem("ax-sid", s); return s; })());
+let code = localStorage.getItem("ax-code") || "";
 
-  // 크루 대화: 등장 시 메시지가 순차로 도착하는 연출
-  const chat = document.getElementById('chatwin');
-  const cio = new IntersectionObserver((es) => {
-    es.forEach(e => {
-      if (!e.isIntersecting) return;
-      cio.unobserve(chat);
-      const items = chat.querySelectorAll('.m, .sysline');
-      items.forEach((el, i) => setTimeout(() => el.classList.add('in'), 350 + i * 650));
+const AG = {
+  naru:  { name: "나루", color: "var(--naru)", av: "나" },
+  gyeol: { name: "결",   color: "var(--gyeol)", av: "결" },
+  me:    { name: "나",   color: "var(--me)",   av: "나" },
+};
+const CH = {
+  lounge: { name: "# 크루-라운지", desc: "에이전트들이 서로 대화하는 공용 채널",
+            hint: "말을 걸면 나루가 답하고, 결이 자기 관점으로 이어받습니다 — 전부 실시간 생성입니다",
+            ph: "크루에게 말 걸기…", kind: "lounge",
+            introH: "크루-라운지", introP: "에이전트들의 공용 채널입니다. 무엇이든 물어보세요 — 나루가 답하고, 검증 담당 결이 끼어들어 자기 시각을 보탭니다. 대본 없음, 모든 응답은 지금 서버에서 만들어집니다." },
+  review: { name: "# 검증-파이프라인", desc: "작성 → 적대적 검증 → 수정",
+            hint: "과제를 투입하면 나루 초안 → 결의 지적(빠진 것·틀린 가정·약한 근거) → 반영 최종본 (1~3분)",
+            ph: "과제 투입 — 예: 신입 첫 주 온보딩 안내문 초안", kind: "review",
+            introH: "검증-파이프라인", introP: "크루가 산출물을 다루는 방식 그대로입니다. 과제를 한 줄 적어 투입하면, 작성과 검증이 분리된 두 에이전트가 초안 → 적대적 검증 → 최종본까지 협업하는 과정을 그대로 볼 수 있습니다." },
+  naru:   { name: "나루", desc: "안내·문서 담당 · 다이렉트 메시지",
+            hint: "한 세션 15턴 · 응답 10~30초", ph: "나루에게 메시지…", kind: "dm",
+            introH: "나루와의 대화", introP: "이 체계가 뭔지, 어떻게 돌아가는지 담당 에이전트에게 직접 물어보세요. 예: \"교차 검증은 어떻게 해?\", \"운영하면서 뭐가 제일 어려웠어?\"" },
+};
+const msgs = { lounge: [], review: [], naru: [] };
+const busy = { lounge: false, review: false, naru: false };
+let cur = "lounge";
+
+/* ── 렌더 ── */
+function el(tag, cls, html) { const d = document.createElement(tag); if (cls) d.className = cls; if (html !== undefined) d.innerHTML = html; return d; }
+function now() { const d = new Date(); return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); }
+function bubble(m) {
+  if (m.who === "sys") { const s = el("div", "sys"); s.textContent = m.text; return s; }
+  const a = AG[m.who];
+  const w = el("div", "m" + (m.who === "me" ? " me" : ""));
+  const av = el("div", "av", a.av); av.style.background = a.color;
+  const body = el("div");
+  const who = el("div", "who"); who.style.color = m.who === "me" ? "" : a.color;
+  who.innerHTML = (m.who === "me" ? "" : a.name) + (m.t ? ` <time>${m.t}</time>` : "");
+  const b = el("div", "bub");
+  if (m.typing) { b.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>'; }
+  else b.textContent = m.text;
+  if (m.who !== "me") body.appendChild(who);
+  body.appendChild(b);
+  w.appendChild(av); w.appendChild(body);
+  return w;
+}
+function push(ch, m) {
+  msgs[ch].push(m);
+  if (ch === cur) { const n = bubble(m); $("log").appendChild(n); $("log").scrollTop = 1e9; return n; }
+}
+function renderChannel() {
+  const c = CH[cur];
+  $("chname").textContent = c.name; $("chdesc").textContent = c.desc;
+  $("input").placeholder = c.ph; $("chint").textContent = c.hint;
+  document.querySelectorAll(".chan").forEach(b => b.classList.toggle("on", b.dataset.ch === cur));
+  const log = $("log"); log.innerHTML = "";
+  if (!msgs[cur].length) {
+    const i = el("div", "intro");
+    i.appendChild(el("div", "ic", cur === "naru" ? "나" : "#"));
+    i.appendChild(el("h2", "serif", c.introH));
+    i.appendChild(el("p", "", c.introP));
+    log.appendChild(i);
+  } else msgs[cur].forEach(m => log.appendChild(bubble(m)));
+  log.scrollTop = 1e9;
+  $("sb").classList.remove("open"); $("backdrop").classList.remove("show");
+}
+document.querySelectorAll(".chan[data-ch]").forEach(b => {
+  if (b.disabled) return;
+  b.onclick = () => { cur = b.dataset.ch; renderChannel(); };
+});
+$("menubtn").onclick = () => { $("sb").classList.add("open"); $("backdrop").classList.add("show"); };
+$("backdrop").onclick = () => { $("sb").classList.remove("open"); $("backdrop").classList.remove("show"); };
+
+/* ── 네트워크 ── */
+async function post(path, body) {
+  const r = await fetch(API + path, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(Object.assign({ code }, body)) });
+  const j = await r.json().catch(() => ({ error: "서버 응답 오류" }));
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+async function health() {
+  try {
+    const r = await fetch(API + "/health"); await r.json();
+    $("conndot").classList.add("on"); $("conntxt").textContent = "서버 연결됨";
+    $("p-naru").classList.add("on"); $("p-gyeol").classList.add("on");
+  } catch (e) { $("conntxt").textContent = "서버 연결 안 됨"; }
+}
+
+/* ── 전송 ── */
+function typingMsg(ch, who) { const m = { who, typing: true }; const n = push(ch, m); m._node = n; return m; }
+function removeMsg(ch, m) {
+  const i = msgs[ch].indexOf(m); if (i >= 0) msgs[ch].splice(i, 1);
+  if (m._node && m._node.parentNode) m._node.remove();
+}
+async function sendDM(text) {
+  busy.naru = true; updateSend();
+  const t = typingMsg("naru", "naru");
+  try { const j = await post("/chat", { session: sid, message: text }); removeMsg("naru", t); push("naru", { who: "naru", text: j.reply, t: now() }); }
+  catch (e) { removeMsg("naru", t); push("naru", { who: "sys", text: "⚠ " + e.message }); }
+  busy.naru = false; updateSend();
+}
+async function sendThread(ch, text) {
+  busy[ch] = true; updateSend();
+  let t = typingMsg(ch, "naru");
+  try {
+    const { id } = await post("/thread", { kind: CH[ch].kind, session: sid, message: text });
+    let shown = 0;
+    await new Promise((resolve) => {
+      const iv = setInterval(async () => {
+        try {
+          const r = await fetch(`${API}/thread/${id}`); const j = await r.json();
+          for (; shown < j.steps.length; shown++) {
+            if (t) { removeMsg(ch, t); t = null; }
+            const s = j.steps[shown];
+            if (s.agent === "system") push(ch, { who: "sys", text: s.text });
+            else push(ch, { who: s.agent, text: s.text, t: now() });
+          }
+          if (j.status === "running") {
+            if (!t) t = typingMsg(ch, shown === 1 ? "gyeol" : "naru");
+          } else {
+            if (t) { removeMsg(ch, t); t = null; }
+            if (j.status === "done" && ch === "review") push(ch, { who: "sys", text: "검증 반영 완료 — 초안과 최종본을 비교해 보세요" });
+            clearInterval(iv); resolve();
+          }
+        } catch (e) { clearInterval(iv); if (t) removeMsg(ch, t); push(ch, { who: "sys", text: "⚠ 연결 오류" }); resolve(); }
+      }, 3500);
     });
-  }, { threshold: 0.25 });
-  cio.observe(chat);
+  } catch (e) { if (t) removeMsg(ch, t); push(ch, { who: "sys", text: "⚠ " + e.message }); }
+  busy[ch] = false; updateSend();
+}
+function updateSend() { $("send").disabled = busy[cur] || !$("input").value.trim(); }
+$("input").addEventListener("input", () => {
+  const i = $("input"); i.style.height = "auto"; i.style.height = Math.min(i.scrollHeight, 120) + "px";
+  updateSend();
+});
+function submit() {
+  const text = $("input").value.trim();
+  if (!text || busy[cur]) return;
+  $("input").value = ""; $("input").style.height = "auto"; updateSend();
+  push(cur, { who: "me", text, t: now() });
+  if (CH[cur].kind === "dm") sendDM(text); else sendThread(cur, text);
+}
+$("send").onclick = submit;
+$("input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+});
+
+/* ── 게이트 ── */
+async function tryEnter(c) {
+  try {
+    const r = await fetch(API + "/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: c }) });
+    if (!r.ok) throw new Error((await r.json()).error || "인증 실패");
+    code = c; localStorage.setItem("ax-code", c);
+    $("gate").classList.add("out");
+    setTimeout(() => $("gate").remove(), 700);
+    return true;
+  } catch (e) {
+    $("gerr").textContent = e.message === "Failed to fetch" ? "서버에 연결할 수 없습니다" : e.message;
+    $("grow").classList.remove("shake"); void $("grow").offsetWidth; $("grow").classList.add("shake");
+    return false;
+  }
+}
+$("genter").onclick = () => tryEnter($("gcode").value.trim());
+$("gcode").addEventListener("keydown", e => { if (e.key === "Enter") tryEnter($("gcode").value.trim()); });
+
+renderChannel(); updateSend(); health(); setInterval(health, 60000);
+if (code) { $("gcode").value = code; tryEnter(code); }
 </script>
 </body>
 </html>
