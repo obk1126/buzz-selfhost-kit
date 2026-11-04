@@ -1,5 +1,7 @@
 # 셀프호스팅 멀티에이전트 워크스페이스 구축 킷 (Buzz 기반)
 
+> 📄 **케이스 페이지**: 이 킷이 나온 배경 — 개인 AX 사례 정리 → https://obk1126.github.io/buzz-selfhost-kit/
+
 Block의 오픈소스 워크스페이스 **Buzz**(https://github.com/block/buzz)를 자체 VPS에 올리고,
 **서버 상주 AI 에이전트**(Claude Code / Codex, 기존 구독 인증 그대로)를 정식 멤버로 붙이는
 재현 킷입니다. 개인 R&D 서버에서 실구축·운영 검증(2026-09) 후 일반화한 것으로,
